@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { Store } from "@prisma/client";
+import { Size } from "@prisma/client";
 import React, { useState } from "react";
 import * as z from "zod";
 import { Trash } from "lucide-react";
@@ -22,40 +22,57 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { ApiAlert } from "@/components/ui/api-alert";
-import { useOrigin } from "@/hooks/use-origin";
 
-interface SettingsFormProps {
-  data: Store;
-}
+import ImageUpload from "@/components/ui/image-upload";
 
 const formSchema = z.object({
   name: z.string().min(1),
+  value: z.string().min(1),
 });
 
-type SettingsFormValue = z.infer<typeof formSchema>;
+type SizeFormValues = z.infer<typeof formSchema>;
 
-export const SettingsForm = ({ data }: SettingsFormProps) => {
+interface SizeFormProps {
+  initialData: Size | null;
+}
+
+export const SizeForm = ({ initialData }: SizeFormProps) => {
   const params = useParams();
   const router = useRouter();
-  const origin = useOrigin();
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const form = useForm<SettingsFormValue>({
+  const title = initialData ? "Edit size" : "Create size";
+  const description = initialData ? "Edit a size" : "Add a new size";
+
+  const toastMessage = initialData ? "Size updated." : "Size created.";
+  const action = initialData ? "Save changes" : "Create";
+
+  const form = useForm<SizeFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: data,
+    defaultValues: initialData || {
+      name: "",
+      value: "",
+    },
   });
 
-  const onSubmit = async (data: SettingsFormValue) => {
+  const onSubmit = async (data: SizeFormValues) => {
     try {
       setLoading(true);
-      await axios.patch(`/api/stores/${params.storeId}`, data);
+      if (initialData) {
+        await axios.patch(
+          `/api/${params.storeId}/sizes/${params.sizeId}`,
+          data
+        );
+      } else {
+        await axios.post(`/api/${params.storeId}/sizes`, data);
+      }
 
       router.refresh();
-      toast.success("Store updated successfully");
-    } catch (error) {
+      router.push(`/${params.storeId}/sizes`);
+      toast.success(toastMessage);
+    } catch (error: any) {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
@@ -65,12 +82,12 @@ export const SettingsForm = ({ data }: SettingsFormProps) => {
   const onDelete = async () => {
     try {
       setLoading(true);
-      await axios.delete(`/api/stores/${params.storeId}`);
+      await axios.delete(`/api/${params.storeId}/sizes/${params.sizeId}`);
       router.refresh();
-      router.push("/");
-      toast.success("Store deleted successfully");
+      router.push(`/${params.storeId}/sizes`);
+      toast.success("Size deleted successfully");
     } catch (error) {
-      toast.error("Make sure you removed all products and categories first");
+      toast.error("Make sure you removed all products using this size first");
     } finally {
       setLoading(false);
       setOpen(false);
@@ -86,15 +103,17 @@ export const SettingsForm = ({ data }: SettingsFormProps) => {
         loading={loading}
       />
       <div className="flex items-center justify-between">
-        <Heading title="Settings" description="Manage Store" />
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={() => setOpen(true)}
-          disabled={loading}
-        >
-          <Trash className="h-4 w-4" />
-        </Button>
+        <Heading title={title} description={description} />
+        {initialData && (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setOpen(true)}
+            disabled={loading}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <Separator />
       <Form {...form}>
@@ -112,7 +131,24 @@ export const SettingsForm = ({ data }: SettingsFormProps) => {
                   <FormControl>
                     <Input
                       disabled={loading}
-                      placeholder="Store name"
+                      placeholder="Size name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="value"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Value</FormLabel>
+                  <FormControl>
+                    <Input
+                      disabled={loading}
+                      placeholder="Size value"
                       {...field}
                     />
                   </FormControl>
@@ -122,12 +158,10 @@ export const SettingsForm = ({ data }: SettingsFormProps) => {
             />
           </div>
           <Button disabled={loading} className="ml-auto" type="submit">
-            Save changes
+            {action}
           </Button>
         </form>
       </Form>
-      <Separator />
-      <ApiAlert title="NEXT_PUBLIC_API_URL" description={`${origin}/api/${params.storeId}`} variant="public" />
     </>
   );
 };
