@@ -39,10 +39,13 @@ type CategoryFormValues = z.infer<typeof formSchema>;
 
 interface CategoryFormProps {
   initialData: Category | null;
-  billboards: Billboard[]
+  billboards: Billboard[];
 }
 
-export const CategoryForm = ({ initialData, billboards }: CategoryFormProps) => {
+export const CategoryForm = ({
+  initialData,
+  billboards,
+}: CategoryFormProps) => {
   const params = useParams();
   const router = useRouter();
 
@@ -169,11 +172,11 @@ export const CategoryForm = ({ initialData, billboards }: CategoryFormProps) => 
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {
-                        billboards.map((billboard)=>(
-                          <SelectItem key={billboard.id} value={billboard.id}>{billboard.label}</SelectItem>
-                        ))
-                      }
+                      {billboards.map((billboard) => (
+                        <SelectItem key={billboard.id} value={billboard.id}>
+                          {billboard.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
 

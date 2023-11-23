@@ -63,13 +63,13 @@ export async function GET(
 
    
 
-    const sizes = await prismadb.billboard.findMany({
+    const billboard = await prismadb.billboard.findMany({
       where: {
         storeId: params.storeId,
       },
     });
 
-    return NextResponse.json(sizes);
+    return NextResponse.json(billboard);
   } catch (error) {
     console.log("BILLBOARDS_GET", error);
 
