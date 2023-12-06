@@ -102,9 +102,9 @@ export async function GET(
     const products = await prismadb.product.findMany({
       where: {
         storeId: params.storeId,
-        categoryId,
-        colorId,
-        sizeId,
+        categoryId: categoryId,
+        colorId: colorId,
+        sizeId: sizeId,
         isFeatured: isFeatured ? true : undefined,
         isArchived: false,
       },
@@ -121,7 +121,7 @@ export async function GET(
 
     return NextResponse.json(products);
   } catch (error) {
-    console.log("PRODUCTS_GET", error);
+    console.log("[PRODUCTS_GET]", error);
 
     return new NextResponse("Internal Error", { status: 500 });
   }
